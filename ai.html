@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKDEVELOPER AI S24</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        body {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: black;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+        .logo span { color: #facc15; }
+        .box { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .title { font-size: 16px; font-weight: bold; color: #facc15; }
+        #countdown { font-size: 18px; font-weight: bold; color: #fbbf24; }
+        .history-entry { background: #334155; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            📈 SKDEVELOPER <span>AI S24</span>
+        </div>
+
+        <div class="box">
+            <div class="title">🟡 Current Prediction</div>
+            <p>🕒 <strong>Countdown:</strong> <span id="countdown">60</span>s</p>
+            <p>⭐ <strong>Prediction:</strong> <span id="prediction">Loading...</span></p>
+            <p>📅 <strong>Period:</strong> <span id="period">Calculating...</span></p>
+        </div>
+
+        <div class="box">
+            <div class="title">🔄 Prediction History</div>
+            <div id="history"></div>
+        </div>
+    </div>
+
+    <audio id="alertSound" src="https://www.fesliyanstudios.com/play-mp3/4386"></audio>
+
+    <script>
+        let history = []; // Store last 3 results
+
+        // Function to generate period number based on 5:29 AM IST start
+        function generatePeriodNumber() {
+            let now = new Date();
+            
+            // Convert to IST
+            let istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+            let start = new Date(istNow);
+            start.setHours(5, 29, 0, 0); // Start reference point at 5:29 AM
+
+            let elapsedMinutes = istNow >= start ? Math.floor((istNow - start) / 60000) : 0;
+
+            let formattedDate = istNow.getFullYear().toString() +
+                                String(istNow.getMonth() + 1).padStart(2, '0') +
+                                String(istNow.getDate()).padStart(2, '0');
+
+            let periodString = "10001" + String(elapsedMinutes).padStart(4, '0');
+            return formattedDate + periodString;
+        }
+
+        // Function to predict Big/Small based on the given formula
+        function predictBigOrSmall(periodNumber) {
+            let periodNum = parseInt(periodNumber.slice(-4)); // Extract last 4 digits
+            let prediction = ((periodNum * 53) - (periodNum % 31)) % 10;
+            return prediction >= 5 ? "BIG" : "SMALL";
+        }
+
+        // Function to update prediction
+        function updatePrediction() {
+            let period = generatePeriodNumber();
+            let calculatedResult = predictBigOrSmall(period);
+
+            // Check last 3 results and force alternate prediction if needed
+            if (history.length >= 3) {
+                let lastThree = history.slice(-3);
+                if (lastThree.every(r => r === "BIG")) {
+                    calculatedResult = "SMALL";
+                } else if (lastThree.every(r => r === "SMALL")) {
+                    calculatedResult = "BIG";
+                }
+            }
+
+            document.getElementById("prediction").innerText = calculatedResult;
+            document.getElementById("period").innerText = period;
+            history.push(calculatedResult);
+
+            // Update history section
+            let historyDiv = document.getElementById("history");
+            let historyEntry = `
+                <div class="history-entry">
+                    📅 <strong>Period:</strong> ${period} | ⭐ <strong>Prediction:</strong> ${calculatedResult}
+                </div>
+            `;
+            historyDiv.innerHTML = historyEntry + historyDiv.innerHTML;
+
+            // Play alert sound (only if user has interacted)
+            let alertSound = document.getElementById("alertSound");
+            if (alertSound) {
+                alertSound.play().catch(error => console.log("Audio play blocked:", error));
+            }
+        }
+
+        // Countdown Timer
+        function startCountdown() {
+            let counter = 60;
+            setInterval(() => {
+                counter--;
+                document.getElementById("countdown").innerText = counter;
+                if (counter === 0) {
+                    counter = 60;
+                    updatePrediction();  // Refresh prediction every 60 seconds
+                }
+            }, 1000);
+        }
+
+        updatePrediction();
+        startCountdown();
+    </script>
+</body>
+</html>
